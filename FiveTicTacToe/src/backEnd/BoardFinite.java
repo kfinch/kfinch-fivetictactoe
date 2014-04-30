@@ -5,8 +5,8 @@ import java.util.Set;
 
 public class BoardFinite {
 
-	public Symbol board[][];
-	public Symbol turn;
+	protected Symbol board[][];
+	protected Symbol turn;
 	public final int xDim;
 	public final int yDim;
 	
@@ -31,6 +31,14 @@ public class BoardFinite {
 		this.turn = turn;
 		this.xDim = xDim;
 		this.yDim = yDim;
+	}
+	
+	/**
+	 * Getter method for turn
+	 * @return whose turn it is
+	 */
+	public Symbol turn(){
+		return turn;
 	}
 	
 	/**
@@ -146,6 +154,14 @@ public class BoardFinite {
 				board[x][y] = Symbol.EMPTY;
 			}
 		}
+	}
+	
+	/**
+	 * Starts a new game by clearing the board and setting turn to X
+	 */
+	public void startNewGame(){
+		clear();
+		turn = Symbol.X;
 	}
 	
 	public String toString(){

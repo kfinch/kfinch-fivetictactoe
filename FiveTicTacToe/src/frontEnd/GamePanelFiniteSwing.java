@@ -47,8 +47,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	}
 	
 	public void playNewGame(){
-		gameBoard.clear();
-		gameBoard.turn = Symbol.X;
+		gameBoard.startNewGame();
 		updateTurnStatus();
 		isStarted = true;
 		repaint();
@@ -58,7 +57,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	 * Updates the status bar at the top of the window to reflect whose turn it is.
 	 */
 	private void updateTurnStatus(){
-		if(gameBoard.turn == Symbol.X){
+		if(gameBoard.turn() == Symbol.X){
 			turnStatus.setText("<html><font color='red'>X to play</font></html>");
 			turnStatus.setBorder(BorderFactory.createEtchedBorder(Color.red, Color.red));
 			turnStatus.setBackground(new Color(1.0f,0.7f,0.7f));
