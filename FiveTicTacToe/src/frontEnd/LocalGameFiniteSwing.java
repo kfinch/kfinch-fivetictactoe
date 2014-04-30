@@ -28,6 +28,7 @@ import backEnd.Symbol;
 public class LocalGameFiniteSwing extends JFrame implements ActionListener {
 
 	private JLabel turnStatus;
+	private GamePanelFiniteSwing gamePanel;
 	
 	public LocalGameFiniteSwing(){
 		initUI();
@@ -50,39 +51,25 @@ public class LocalGameFiniteSwing extends JFrame implements ActionListener {
 		turnStatus.setText("Waiting for game to start..."); //TODO: Write something better for starting text..
         add(turnStatus, BorderLayout.NORTH);
 
-        //initialize button panel
+        //add button panel
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBorder(BorderFactory.createEtchedBorder(Color.black, Color.black));
         add(buttonPanel, BorderLayout.SOUTH);
         
-        //initialize buttons
+        //add buttons
         JButton newgameButton = new JButton("New Game");
         JButton quitButton = new JButton("Quit");
-        
-        newgameButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                System.exit(0); //TODO: Make this button actually start a new game rather than also quitting.
-           }
-        });
-        
-        quitButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent event) {
-                System.exit(0);
-           }
-        });
-
+        newgameButton.addActionListener(this);
+        quitButton.addActionListener(this);
         buttonPanel.add(newgameButton);
         buttonPanel.add(quitButton);
         
-        GamePanelFiniteSwing gamePanel = new GamePanelFiniteSwing(this);
+        //add game panel
+        gamePanel = new GamePanelFiniteSwing(this);
         gamePanel.setBorder(BorderFactory.createEtchedBorder(Color.black, Color.black));
         gamePanel.setSize(750, 850);
         add(gamePanel, BorderLayout.CENTER);
         //setResizable(false); //TODO: Leave this here?
-        
-        gamePanel.play();
 	}
 	
 	public JLabel getTurnStatus(){
@@ -90,9 +77,14 @@ public class LocalGameFiniteSwing extends JFrame implements ActionListener {
 	}
 	
 	@Override
-	public void actionPerformed(ActionEvent arg0) {
-		// TODO Auto-generated method stub
-		
+	public void actionPerformed(ActionEvent e) {
+		String command = e.getActionCommand();
+		if(command.equals("New Game")){
+			gamePanel.playNewGame();
+		}
+		if(command.equals("Quit")){
+			System.exit(0);
+		}
 	}
 
 	public static void main(String[] args) {

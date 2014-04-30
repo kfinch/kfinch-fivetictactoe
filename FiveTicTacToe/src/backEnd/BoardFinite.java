@@ -137,6 +137,17 @@ public class BoardFinite {
 		return null;
 	}
 	
+	/**
+	 * Clears the board of all symbols. (Everything is set to Symbol.EMPTY)
+	 */
+	public void clear(){
+		for(int x=0; x<xDim; x++){
+			for(int y=0; y<yDim; y++){
+				board[x][y] = Symbol.EMPTY;
+			}
+		}
+	}
+	
 	public String toString(){
 		String result = "";
 		if(turn == Symbol.X)
