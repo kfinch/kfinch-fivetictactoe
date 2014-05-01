@@ -36,6 +36,9 @@ public class BoardFiniteBot extends BoardFinite {
 										   	   {0, 10, 150, 1000, 1000000},
 										   	   {0, 40, 250, 1000, 1000000}};
 	
+	
+	//I have to repeat initialization of xDim and yDim on all these constructors. Not entirely sure why.
+	
 	/**
 	 * Initializes as a copy of the supplied board.
 	 */
@@ -44,6 +47,28 @@ public class BoardFiniteBot extends BoardFinite {
 		this.yDim = b.yDim;
 		this.board = b.board;
 		this.turn = b.turn;
+		hasChecked = new boolean[xDim][yDim];
+	}
+	
+	public BoardFiniteBot(){
+		super();
+		this.xDim = super.xDim;
+		this.yDim = super.yDim;
+		hasChecked = new boolean[xDim][yDim];
+	}
+	
+	public BoardFiniteBot(int xDim, int yDim){
+		super(xDim,yDim);
+		this.xDim = super.xDim;
+		this.yDim = super.yDim;
+		hasChecked = new boolean[xDim][yDim];
+	}
+	
+	public BoardFiniteBot(Symbol[][] board, Symbol turn, int xDim, int yDim){
+		super(board,turn,xDim,yDim);
+		this.xDim = super.xDim;
+		this.yDim = super.yDim;
+		hasChecked = new boolean[xDim][yDim];
 	}
 	
 	/**
@@ -55,7 +80,6 @@ public class BoardFiniteBot extends BoardFinite {
 	 * 		   Positive is better for the current player.
 	 */
 	public int evaluate(){
-		hasChecked = new boolean[xDim][yDim];
 		for(int x=0; x<xDim; x++){
 			for(int y=0; y<yDim; y++){
 				hasChecked[x][y] = false;
@@ -166,7 +190,6 @@ public class BoardFiniteBot extends BoardFinite {
 	public List<Square> getAllReasonableMoves(){
 		List<Square> result = new ArrayList<Square>(50); //TODO: Check if this is reasonable starting size
 		
-		hasChecked = new boolean[xDim][yDim];
 		for(int x=0; x<xDim; x++){
 			for(int y=0; y<yDim; y++){
 				hasChecked[x][y] = false;

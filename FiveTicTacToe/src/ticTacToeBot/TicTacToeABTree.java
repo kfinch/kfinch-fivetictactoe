@@ -11,7 +11,7 @@ import backEnd.Square;
  * 
  * @author Kelton Finch
  */
-class TicTacToeABTree {
+public class TicTacToeABTree {
 
 	private int fixedDepth;
 	private Square bestMove;

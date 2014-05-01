@@ -57,11 +57,14 @@ public class LocalGameFiniteSwing extends JFrame implements ActionListener {
         add(buttonPanel, BorderLayout.SOUTH);
         
         //add buttons
-        JButton newgameButton = new JButton("New Game");
+        JButton newHotseatGameButton = new JButton("New Hotseat Game");
+        JButton newBotGameButton = new JButton("New Bot Game");
         JButton quitButton = new JButton("Quit");
-        newgameButton.addActionListener(this);
+        newHotseatGameButton.addActionListener(this);
+        newBotGameButton.addActionListener(this);
         quitButton.addActionListener(this);
-        buttonPanel.add(newgameButton);
+        buttonPanel.add(newHotseatGameButton);
+        buttonPanel.add(newBotGameButton);
         buttonPanel.add(quitButton);
         
         //add game panel
@@ -79,8 +82,11 @@ public class LocalGameFiniteSwing extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
-		if(command.equals("New Game")){
-			gamePanel.playNewGame();
+		if(command.equals("New Hotseat Game")){
+			gamePanel.playNewHotseatGame();
+		}
+		if(command.equals("New Bot Game")){
+			gamePanel.playNewBotGame();
 		}
 		if(command.equals("Quit")){
 			System.exit(0);

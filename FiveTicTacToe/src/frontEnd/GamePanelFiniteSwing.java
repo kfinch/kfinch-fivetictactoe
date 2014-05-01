@@ -15,14 +15,20 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import backEnd.BoardFinite;
+import ticTacToeBot.BoardFiniteBot;
+import ticTacToeBot.TicTacToeABTree;
 import backEnd.Square;
 import backEnd.Symbol;
 
 public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 
-	BoardFinite gameBoard;
-	private boolean isStarted;
+	private BoardFiniteBot gameBoard; //the back end's game board!
+	private TicTacToeABTree searchTree; //a minimax search tree used by the bot
+	private static final int searchDepth = 4; //depth bot searches to while looking for move.
+	
+	private boolean isStarted; //true iff there is a game on
+	private boolean isBotGame; //true iff the current game is against the bot
+	private Symbol botsTurn; //which player the bot is.
 	
 	Dimension size; //The dimensions of the game panel, in pixels
 	private int width, height; //the width and height of the game panel, in pixels
@@ -34,7 +40,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	
 	private LocalGameFiniteSwing parent;
 	private JLabel turnStatus; //A hook to the parent's status bar, allowing it to be updated
-	private InputAdapter input;
+	private InputAdapter input; //for reading mouse input
 	
 	public GamePanelFiniteSwing(LocalGameFiniteSwing parent){
 		this.parent = parent;
@@ -42,14 +48,50 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 		input = new InputAdapter();
 		addMouseListener(input);
 		
-		gameBoard = new BoardFinite();
+		gameBoard = new BoardFiniteBot();
+		searchTree = new TicTacToeABTree();
 		isStarted = false;
+		botsTurn = Symbol.O; //for now, but only plays as O
 	}
 	
-	public void playNewGame(){
+	/**
+	 * Clears the board and starts a new hotseat game of five-in-a-row tic-tac-toe.
+	 */
+	public void playNewHotseatGame(){
 		gameBoard.startNewGame();
 		updateTurnStatus();
 		isStarted = true;
+		isBotGame = false;
+		repaint();
+	}
+	
+	/**
+	 * Clears the board and starts a new game vs. the bot of five-in-a-row tic-tac-toe.
+	 * For now, the bot only plays as O.
+	 */
+	public void playNewBotGame(){
+		gameBoard.startNewGame();
+		updateTurnStatus();
+		isStarted = true;
+		isBotGame = true;
+		repaint();
+	}
+	
+	/*
+	 * Bot calculates best move and then acts on it
+	 */
+	public void botMove(){
+		System.out.println("Bot is thinking!"); //TODO: Remove debugging code
+		Square move = searchTree.getBestMoveFixed(gameBoard, searchDepth);
+		
+		if(!gameBoard.isEmpty(move)){ //checks to make sure bot returned a legal move!
+			System.out.println("Bot tried an illegal move!"); //TODO: Remove debugging code
+			return;
+		}
+			
+		gameBoard.makeMove(move);
+		updateTurnStatus();
+		System.out.println("Bot moved!"); //TODO: Remove debugging code
 		repaint();
 	}
 	
@@ -76,10 +118,8 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 		boardXSize = gameBoard.xDim;
 		boardYSize = gameBoard.yDim;
 		boxDim = Math.min(width/boardXSize, height/boardYSize);
-		//System.out.println(boxDim + "\n" + width + "\n" + height); //TODO: Remove debugging code here
 		widthOffset = (width-(boxDim*boardXSize))/2;
 		heightOffset = (height-(boxDim*boardYSize))/2;
-		//System.out.println(widthOffset + "\n" + heightOffset); //TODO: Remove debugging code here
 	}
 	
 	/*
@@ -193,7 +233,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	
 		@Override
 		public void mouseClicked(MouseEvent e){
-			if(!isStarted) //can't make moves before game starts
+			if(!isStarted || (isBotGame && gameBoard.turn() == botsTurn)) //can't make moves before game starts or during bot's turn
 				return;
 			
 			Dimension loc = new Dimension(e.getX(),e.getY());
@@ -208,6 +248,10 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 			gameBoard.makeMove(move);
 			updateTurnStatus();
 			repaint();
+			
+			//if we're playing against a bot, and this move didn't just end the game, tell the bot to move.
+			if(isStarted && isBotGame)
+				botMove();
 		}
 	}
 	
