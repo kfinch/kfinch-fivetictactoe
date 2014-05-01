@@ -49,9 +49,9 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 		addMouseListener(input);
 		
 		gameBoard = new BoardFiniteBot();
-		searchTree = new TicTacToeABTree();
+		searchTree = new TicTacToeABTree(true);//TODO: Verbose mode on for debugging
 		isStarted = false;
-		botsTurn = Symbol.O; //for now, but only plays as O
+		botsTurn = Symbol.O; //for now, Bot only plays as O
 	}
 	
 	/**
@@ -67,7 +67,6 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	
 	/**
 	 * Clears the board and starts a new game vs. the bot of five-in-a-row tic-tac-toe.
-	 * For now, the bot only plays as O.
 	 */
 	public void playNewBotGame(){
 		gameBoard.startNewGame();
@@ -77,12 +76,14 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 		repaint();
 	}
 	
-	/*
+	/**
 	 * Bot calculates best move and then acts on it
 	 */
 	public void botMove(){
 		System.out.println("Bot is thinking!"); //TODO: Remove debugging code
-		Square move = searchTree.getBestMoveFixed(gameBoard, searchDepth);
+		//doesn't give bot the actual gameBoard reference so the master copy can't be messed with
+		BoardFiniteBot carbonCopy = new BoardFiniteBot(gameBoard);
+		Square move = searchTree.getBestMoveFixed(carbonCopy, searchDepth);
 		
 		if(!gameBoard.isEmpty(move)){ //checks to make sure bot returned a legal move!
 			System.out.println("Bot tried an illegal move!"); //TODO: Remove debugging code
@@ -158,7 +159,12 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 				g2d.fillRect(loc.width, loc.height, boxDim, boxDim);
 				drawSymbol(fiveInARow[i], g2d);
 			}
-			turnStatus.setText("<html><font color='red'>X WINS!</font></html>");
+			if(isBotGame && winner == botsTurn)
+				turnStatus.setText("<html><font color='red'>BOT WINS!</font></html>");
+			else if(isBotGame && winner != botsTurn)
+				turnStatus.setText("<html><font color='red'>HUMAN WINS!</font></html>");
+			else
+				turnStatus.setText("<html><font color='red'>X WINS!</font></html>");
 			turnStatus.setBorder(BorderFactory.createEtchedBorder(Color.red, Color.red));
 			turnStatus.setBackground(new Color(1.0f,0.7f,0.7f));
 			break;
@@ -169,7 +175,12 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 				g2d.fillRect(loc.width, loc.height, boxDim, boxDim);
 				drawSymbol(fiveInARow[i], g2d);
 			}
-			turnStatus.setText("<html><font color='blue'>O WINS!</font></html>");
+			if(isBotGame && winner == botsTurn)
+				turnStatus.setText("<html><font color='blue'>BOT WINS!</font></html>");
+			else if(isBotGame && winner != botsTurn)
+				turnStatus.setText("<html><font color='blue'>HUMAN WINS!</font></html>");
+			else
+				turnStatus.setText("<html><font color='blue'>O WINS!</font></html>");
 			turnStatus.setBorder(BorderFactory.createEtchedBorder(Color.blue, Color.blue));
 			turnStatus.setBackground(new Color(0.7f,0.7f,1.0f));
 			break;

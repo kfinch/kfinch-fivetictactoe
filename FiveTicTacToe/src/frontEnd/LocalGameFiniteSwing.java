@@ -38,8 +38,8 @@ public class LocalGameFiniteSwing extends JFrame implements ActionListener {
 		
 		//initialize main window
 		setTitle("Five in a Row Tic Tac Toe");
-        setSize(750, 850);
-        //setResizable(false);
+		//this is a reasonable default size, any size chosen should be roughly 1:1, with ~90 extra pixels on height
+        setSize(750, 840);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		
@@ -48,7 +48,7 @@ public class LocalGameFiniteSwing extends JFrame implements ActionListener {
 		turnStatus.setFont(new Font("Sans_Serif", Font.BOLD, 16));
 		turnStatus.setHorizontalAlignment(SwingConstants.CENTER);
 		turnStatus.setOpaque(true);
-		turnStatus.setText("Waiting for game to start..."); //TODO: Write something better for starting text..
+		turnStatus.setText("Choose a game mode!"); //TODO: Write something better for starting text..
         add(turnStatus, BorderLayout.NORTH);
 
         //add button panel
@@ -72,7 +72,7 @@ public class LocalGameFiniteSwing extends JFrame implements ActionListener {
         gamePanel.setBorder(BorderFactory.createEtchedBorder(Color.black, Color.black));
         gamePanel.setSize(750, 850);
         add(gamePanel, BorderLayout.CENTER);
-        //setResizable(false); //TODO: Leave this here?
+        //setResizable(false); //TODO: Leave this here? The board handles being resized, it's probably not needed...
 	}
 	
 	public JLabel getTurnStatus(){

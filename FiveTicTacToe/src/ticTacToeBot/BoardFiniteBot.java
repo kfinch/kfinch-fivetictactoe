@@ -45,7 +45,12 @@ public class BoardFiniteBot extends BoardFinite {
 	public BoardFiniteBot(BoardFiniteBot b){
 		this.xDim = b.xDim;
 		this.yDim = b.yDim;
-		this.board = b.board;
+		this.board = new Symbol[xDim][yDim];
+		for(int x=0; x<xDim; x++){
+			for(int y=0; y<yDim; y++){
+				this.board[x][y] = b.board[x][y];
+			}
+		}
 		this.turn = b.turn;
 		hasChecked = new boolean[xDim][yDim];
 	}
