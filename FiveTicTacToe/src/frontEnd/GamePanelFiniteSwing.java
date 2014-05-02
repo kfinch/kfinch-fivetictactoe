@@ -26,7 +26,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	private Square lastMove; //keeps track of the most recent move
 	
 	private TicTacToeABTree searchTree; //a minimax search tree used by the bot
-	private static final int searchDepth = 4; //depth bot searches to while looking for move.
+	private static final int searchDepth = 3; //depth bot searches to while looking for move.
 	
 	private boolean isStarted; //true iff there is a game on
 	private boolean isBotGame; //true iff the current game is against the bot
@@ -84,7 +84,6 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	 * Bot calculates best move and then acts on it
 	 */
 	//Currently this method pegs the thread, preventing other user options from being chosen while bot is calculating
-	//TODO: add multithreading, so I can shunt this method off to another thread
 	public void botMove(){
 		System.out.println("Bot is thinking!"); //TODO: Remove debugging code
 		//doesn't give bot the actual gameBoard reference so the master copy can't be messed with
@@ -265,7 +264,8 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {}
 
-	class InputAdapter extends MouseAdapter{
+	//Adapter for receiving mouse input.
+	class InputAdapter extends MouseAdapter {
 	
 		@Override
 		public void mouseClicked(MouseEvent e){
@@ -289,7 +289,15 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 			
 			//if we're playing against a bot, and this move didn't just end the game, tell the bot to move.
 			if(isStarted && isBotGame)
-				botMove();
+				(new BotThread()).run();
+		}
+	}
+	
+	//Another thread to run the bot's computations, so as to not interfere with UI processing.
+	//TODO: It still does though... gotta figure this out.
+	class BotThread extends Thread {
+		public void run(){
+			botMove();
 		}
 	}
 	
