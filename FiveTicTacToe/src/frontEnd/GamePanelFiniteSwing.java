@@ -23,6 +23,8 @@ import backEnd.Symbol;
 public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 
 	private BoardFiniteBot gameBoard; //the back end's game board!
+	private Square lastMove; //keeps track of the most recent move
+	
 	private TicTacToeABTree searchTree; //a minimax search tree used by the bot
 	private static final int searchDepth = 4; //depth bot searches to while looking for move.
 	
@@ -49,6 +51,8 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 		addMouseListener(input);
 		
 		gameBoard = new BoardFiniteBot();
+		lastMove = null;
+		
 		searchTree = new TicTacToeABTree(true);//TODO: Verbose mode on for debugging
 		isStarted = false;
 		botsTurn = Symbol.O; //for now, Bot only plays as O
@@ -79,6 +83,8 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	/**
 	 * Bot calculates best move and then acts on it
 	 */
+	//Currently this method pegs the thread, preventing other user options from being chosen while bot is calculating
+	//TODO: add multithreading, so I can shunt this method off to another thread
 	public void botMove(){
 		System.out.println("Bot is thinking!"); //TODO: Remove debugging code
 		//doesn't give bot the actual gameBoard reference so the master copy can't be messed with
@@ -91,6 +97,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 		}
 			
 		gameBoard.makeMove(move);
+		lastMove = move; //update most recent move
 		updateTurnStatus();
 		System.out.println("Bot moved!"); //TODO: Remove debugging code
 		repaint();
@@ -157,7 +164,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 				loc = squareToDim(fiveInARow[i]);
 				g2d.setColor(new Color(1.0f,0.7f,0.7f));
 				g2d.fillRect(loc.width, loc.height, boxDim, boxDim);
-				drawSymbol(fiveInARow[i], g2d);
+				//drawSymbol(fiveInARow[i], g2d);
 			}
 			if(isBotGame && winner == botsTurn)
 				turnStatus.setText("<html><font color='red'>BOT WINS!</font></html>");
@@ -173,7 +180,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 				loc = squareToDim(fiveInARow[i]);
 				g2d.setColor(new Color(0.7f,0.7f,1.0f));
 				g2d.fillRect(loc.width, loc.height, boxDim, boxDim);
-				drawSymbol(fiveInARow[i], g2d);
+				//drawSymbol(fiveInARow[i], g2d);
 			}
 			if(isBotGame && winner == botsTurn)
 				turnStatus.setText("<html><font color='blue'>BOT WINS!</font></html>");
@@ -186,6 +193,22 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 			break;
 		}
 		isStarted = false;
+	}
+	
+	private void drawLastMove(Graphics2D g2d){
+		if(lastMove == null) //if no one has moved yet, don't need to draw anything
+			return;
+		Dimension loc = squareToDim(lastMove);
+		switch(gameBoard.symbolAt(lastMove)){
+		case X : 
+			g2d.setColor(new Color(1.0f,0.7f,0.7f));
+			g2d.fillRect(loc.width, loc.height, boxDim, boxDim);
+			break;
+		case O : 
+			g2d.setColor(new Color(0.7f,0.7f,1.0f));
+			g2d.fillRect(loc.width, loc.height, boxDim, boxDim);
+			break;
+		}
 	}
 	
 	private void drawSymbol(Square sq, Graphics2D g2d){
@@ -213,6 +236,12 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
         Graphics2D g2d = (Graphics2D) g;
         updateDimensions(); //ensures window dimensions are up to date
 
+        drawLastMove(g2d);
+        
+        Square fiveInARow[] = gameBoard.fiveInARow();
+        if(fiveInARow != null)
+        	handleVictory(fiveInARow, g2d);
+        
         //draws the board grid
         g2d.setColor(Color.black);
         g2d.setStroke(new BasicStroke(1));
@@ -225,10 +254,6 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
         Set<Square> squareSet = gameBoard.squareSet();
         for(Square s : squareSet)
         	drawSymbol(s,g2d);
-        
-        Square fiveInARow[] = gameBoard.fiveInARow();
-        if(fiveInARow != null)
-        	handleVictory(fiveInARow, g2d);
     }
 
     @Override
@@ -257,8 +282,10 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 				return;
 				
 			gameBoard.makeMove(move);
+			lastMove = move; //update most recent move
 			updateTurnStatus();
 			repaint();
+			paintImmediately(0, 0, width, height); //force the repaint before the bot move pegs the thread.
 			
 			//if we're playing against a bot, and this move didn't just end the game, tell the bot to move.
 			if(isStarted && isBotGame)
