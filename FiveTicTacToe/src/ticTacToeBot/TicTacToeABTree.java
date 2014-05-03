@@ -1,6 +1,7 @@
 package ticTacToeBot;
 
 import java.util.List;
+
 import backEnd.Square;
 
 /**
@@ -11,27 +12,43 @@ import backEnd.Square;
  * 
  * @author Kelton Finch
  */
-public class TicTacToeABTree {
+public class TicTacToeABTree implements Runnable {
 
-	private int fixedDepth;
-	private Square bestMove;
+	private int fixedDepth; //the maximum depth that will be searched
+	private int currentDepth; //the depth currently being searched by iterative deepening
+	private BoardFiniteBot board; //the game state to be searched
+	private Square bestMove; //the current best move (starts as null before search begins)
 	
 	//The switch for verbose mode, and some vars for keeping track of stats to be printed.
 	private boolean verbose;
 	private int posEvalCount;
 	
-	public TicTacToeABTree(){
+	public TicTacToeABTree(BoardFiniteBot board, int fixedDepth){
+		this.board = board;
+		this.fixedDepth = fixedDepth;
 		verbose = false;
+		bestMove = null;
 	}
 	
-	public TicTacToeABTree(boolean verbose){
+	public TicTacToeABTree(BoardFiniteBot board, int fixedDepth, boolean verbose){
+		this.board = board;
+		this.fixedDepth = fixedDepth;
 		this.verbose = verbose;
+		bestMove = null;
+	}
+	
+	public void run(){
+		generateBestMove();
+	}
+	
+	public Square getBestMove(){
+		return bestMove;
 	}
 
 	/**
-	 * Searches to the specified depth starting from the specified board position, and returns the best move found.
+	 * Searches to the fixedDepth starting from the board position, and returns the best move found.
 	 */
-	public Square getBestMoveFixed(BoardFiniteBot b, int depth) {
+	public void generateBestMove(){
 		posEvalCount = 0;
 		bestMove = null;
 		
@@ -40,11 +57,16 @@ public class TicTacToeABTree {
 		//TODO: Search clearly slows WAY down when nearing OOM without doing much useful work. Investigate possible fixes.
 		try{
 			//search is progressively deepened, with the best move from previous iterations searched first.
-			for(int i=2; i<=depth; i++){
+			for(int i=2; i<=fixedDepth; i++){
 				if(verbose)
 					System.out.println("Searching at depth " + i + "...");
-				fixedDepth = i;
-				treeSearchRecurse(b,i,-Integer.MAX_VALUE,Integer.MAX_VALUE);
+				currentDepth = i;
+				try {
+					treeSearchRecurse(board,i,-Integer.MAX_VALUE,Integer.MAX_VALUE);
+				} catch (InterruptedException e) {
+					if(verbose)
+						System.out.println("Interrupted!");
+				}
 				if(verbose)
 					System.out.println("Current best move found: " + bestMove);
 			}
@@ -59,7 +81,6 @@ public class TicTacToeABTree {
 			System.out.println("Search took " + ((endTime - beginTime)/1000000000) + " seconds");
 			System.out.println("Positions evaluated: " + posEvalCount);
 		}
-		return bestMove;
 	}
 	
 	/*
@@ -67,7 +88,10 @@ public class TicTacToeABTree {
 	 * Optimizes search time via a transposition table.
 	 * Modifies bestMove as a side effect.
 	 */
-	private int treeSearchRecurse(BoardFiniteBot b, int depth, int alpha, int beta){
+	private int treeSearchRecurse(BoardFiniteBot b, int depth, int alpha, int beta) throws InterruptedException{
+		if(Thread.interrupted())
+			throw new InterruptedException();
+		
 		posEvalCount++;
 		
 		//This comes before transposition table stuff because attempting to use 
@@ -89,7 +113,7 @@ public class TicTacToeABTree {
 		//This produces more sensible behavior when the search must be stopped early due to running out of memory or time.
 		//In addition, searching the probable best position first usually results in much more AB pruning.
 		//This will cause minor amounts of extra work because no transposition table is implemented here.
-		if(fixedDepth == depth && bestMove != null){
+		if(currentDepth == depth && bestMove != null){
 			curr = -treeSearchRecurse(b.afterMove(bestMove),depth-1,-beta,-alpha);
 			if(curr > alpha)
 				alpha = curr;
@@ -101,7 +125,7 @@ public class TicTacToeABTree {
 			curr = -treeSearchRecurse(b.afterMove(s),depth-1,-beta,-alpha);  
 			if(curr > alpha){
 				alpha = curr;
-				if(fixedDepth == depth)
+				if(currentDepth == depth)
 					bestMove = s;
 			}
 			if(alpha >= beta)

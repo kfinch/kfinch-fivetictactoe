@@ -10,6 +10,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors; //EN TARO ADUN
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -26,7 +34,9 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	private Square lastMove; //keeps track of the most recent move
 	
 	private TicTacToeABTree searchTree; //a minimax search tree used by the bot
-	private static final int searchDepth = 3; //depth bot searches to while looking for move.
+	private ExecutorService botRunner; //executor for running the bot's computations
+	private final int searchDepth; //maximum depth bot searches to while looking for move.
+	private final int maxTurnTime; //maximum time, in seconds, the bot can use to compute per turn
 	
 	private boolean isStarted; //true iff there is a game on
 	private boolean isBotGame; //true iff the current game is against the bot
@@ -44,18 +54,26 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	private JLabel turnStatus; //A hook to the parent's status bar, allowing it to be updated
 	private InputAdapter input; //for reading mouse input
 	
-	public GamePanelFiniteSwing(LocalGameFiniteSwing parent){
+	public GamePanelFiniteSwing(LocalGameFiniteSwing parent, int searchDepth, int maxTurnTime){
+		this.searchDepth = searchDepth;
+		this.maxTurnTime = maxTurnTime;
+		
 		this.parent = parent;
 		turnStatus = parent.getTurnStatus();
 		input = new InputAdapter();
 		addMouseListener(input);
 		
+		botRunner = Executors.newSingleThreadExecutor();
+		
 		gameBoard = new BoardFiniteBot();
 		lastMove = null;
 		
-		searchTree = new TicTacToeABTree(true);//TODO: Verbose mode on for debugging
 		isStarted = false;
 		botsTurn = Symbol.O; //for now, Bot only plays as O
+	}
+	
+	public GamePanelFiniteSwing(LocalGameFiniteSwing parent){
+		this(parent,4,10); //defaults to max depth of 4, 10 seconds maximum turn decide (for the bot)
 	}
 	
 	/**
@@ -81,14 +99,33 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	}
 	
 	/**
-	 * Bot calculates best move and then acts on it
+	 * Bot calculates best move and then acts on it.
+	 * A seperate thread is used for the calculations to avoid pegging the grahpics thread.
 	 */
-	//Currently this method pegs the thread, preventing other user options from being chosen while bot is calculating
 	public void botMove(){
 		System.out.println("Bot is thinking!"); //TODO: Remove debugging code
 		//doesn't give bot the actual gameBoard reference so the master copy can't be messed with
 		BoardFiniteBot carbonCopy = new BoardFiniteBot(gameBoard);
-		Square move = searchTree.getBestMoveFixed(carbonCopy, searchDepth);
+		
+		Square move;
+		searchTree = new TicTacToeABTree(carbonCopy, searchDepth, true);
+		Future<?> future = botRunner.submit(searchTree);
+		
+		try {
+			future.get(maxTurnTime, TimeUnit.SECONDS);
+		}
+		catch (TimeoutException e) {
+			System.out.println("Out of time!"); //TODO: Remove debugging code
+			future.cancel(true);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		move = searchTree.getBestMove();
 		
 		if(!gameBoard.isEmpty(move)){ //checks to make sure bot returned a legal move!
 			System.out.println("Bot tried an illegal move!"); //TODO: Remove debugging code
@@ -265,7 +302,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent e) {}
 
 	//Adapter for receiving mouse input.
-	class InputAdapter extends MouseAdapter {
+	private class InputAdapter extends MouseAdapter {
 	
 		@Override
 		public void mouseClicked(MouseEvent e){
@@ -289,16 +326,7 @@ public class GamePanelFiniteSwing extends JPanel implements ActionListener {
 			
 			//if we're playing against a bot, and this move didn't just end the game, tell the bot to move.
 			if(isStarted && isBotGame)
-				(new BotThread()).run();
+				botMove();
 		}
 	}
-	
-	//Another thread to run the bot's computations, so as to not interfere with UI processing.
-	//TODO: It still does though... gotta figure this out.
-	class BotThread extends Thread {
-		public void run(){
-			botMove();
-		}
-	}
-	
 }
